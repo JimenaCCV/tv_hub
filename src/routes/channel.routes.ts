@@ -8,4 +8,4 @@ channelRouter.get('/', listChannels);
 // Completa el Controller que debe atender esta ruta.
 // Objetivo: conectar GET /api/channels/:id con la lógica que recupera un solo Channel.
 // Resultado esperado: Express debe ejecutar el Controller correcto cuando se solicita un canal por id.
-channelRouter.get('/:id', ________);
+channelRouter.get('/:id', getChannel);

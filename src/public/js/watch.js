@@ -34,18 +34,18 @@ async function playChannel() {
   // Completa la integración básica con Shaka Player.
   // Objetivo: asociar el Player con el elemento de video y cargar el stream del Channel.
   // Resultado esperado: un stream disponible debe reproducirse en la página Watch.
-  player = new shaka.Player(________);
+  player = new shaka.Player(video);
   player.addEventListener('error', () => showPlayerState('error', 'This live stream cannot be played right now.'));
   try {
-    await player.load(________________);
+    await player.load(channel.streamUrl);
 
     // TODO 8:
     // Completa los estados que debe mostrar el reproductor.
     // Objetivo: comunicar si el stream se reprodujo correctamente o si ocurrió un error.
     // Resultado esperado: la interfaz debe cambiar de Loading a Playing o Error.
-    showPlayerState('________', '');
+    showPlayerState('playing', '');
     try { await video.play(); } catch { playerStatus.textContent = 'Press play to start audio.'; }
-  } catch { showPlayerState('________', 'This live stream cannot be played right now.'); }
+  } catch { showPlayerState('error', 'This live stream cannot be played right now.'); }
 }
 async function loadChannel() {
   if (!channelId) { showPlayerState('error', 'Choose a channel from Home.'); return; }
@@ -54,7 +54,7 @@ async function loadChannel() {
   // Completa la URL utilizada para obtener el Channel seleccionado.
   // Objetivo: conectar la View Watch con GET /api/channels/:id.
   // Resultado esperado: DevTools debe mostrar una petición GET con respuesta 200.
-  const response = await fetch(`____________________________`);
+  const response = await fetch(`/api/channels/${channelId}`);
   if (!response.ok) { showPlayerState('error', 'This channel is not available.'); return; }
   ({ channel } = await response.json());
   const logo = document.querySelector('#channel-logo'); logo.src = channel.logoUrl || '/images/channel-placeholder.svg'; logo.alt = `${channel.name} logo`; logo.addEventListener('error', () => { logo.src = '/images/channel-placeholder.svg'; });
@@ -63,9 +63,9 @@ async function loadChannel() {
   // Completa las propiedades del Channel utilizadas por la View.
   // Objetivo: mostrar la información recibida desde el backend.
   // Resultado esperado: Watch debe mostrar nombre, país y categorías del canal seleccionado.
-  document.querySelector('#channel-name').textContent = channel.________;
-  document.querySelector('#channel-country').textContent = channel.________;
-  document.querySelector('#channel-categories').textContent = channel.________.join(', ') || 'Live TV';
+  document.querySelector('#channel-name').textContent = channel.name;
+  document.querySelector('#channel-country').textContent = channel.country;
+  document.querySelector('#channel-categories').textContent = channel.categories.join(', ') || 'Live TV';
   await loadFavoriteState(); await playChannel();
 }
 favoriteButton.addEventListener('click', toggleFavorite); retryButton.addEventListener('click', playChannel);
