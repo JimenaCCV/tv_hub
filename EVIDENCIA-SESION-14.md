@@ -35,3 +35,53 @@ MongoDB guarda solo la metadata del Report (usuario, canal, motivo, descripción
 - `npx jest tests/reports.test.ts`: 8 pruebas pasan (crear, listar, imagen servida, varias imágenes, rechazo de `.txt` y de más de 2 MB, PATCH solo del dueño, DELETE solo del dueño y limpieza de archivos).
 - Prueba manual contra MongoDB real: POST con 2 imágenes, PATCH, consulta del documento en MongoDB y DELETE (204), con `uploads/reports` vacío al final.
 - Nota: `tests/channels.test.ts` falla con 501 en `GET /api/channels/:id`; son TODOs de una sesión anterior que ya venían sin resolver en la base y no forman parte de esta actividad.
+
+## Sección 5 · Evidencias de validación
+
+Pruebas hechas en el navegador contra la app local (`http://localhost:3100/reports.html`) con MongoDB en Docker (`tvhub-mongo`). Las capturas están en `capturas/`.
+
+### 1. Report guardado
+![Report saved](capturas/01-report-guardado.png)
+
+Al enviar el formulario (motivo, descripción e imagen) con `FormData`, la página muestra **"Report saved."** debajo del botón *Submit report*. Esto confirma que el `POST /api/reports` respondió con éxito y que el formulario se reinició.
+
+### 2. Archivo guardado en `uploads/reports`
+![ls uploads/reports](capturas/02-uploads-reports.png)
+
+`ls -la uploads/reports` muestra el archivo `d379d3be-f0ad-4f2d-92d9-f54c3e62b330.png` (80,346 bytes). Multer lo guardó con un nombre UUID, así que no choca con otros archivos. `.gitkeep` solo mantiene la carpeta en Git.
+
+### 3. Documento en MongoDB con `evidenceUrls`
+![db.reports.find()](capturas/03-mongodb-evidenceurls.png)
+
+`db.reports.find().pretty()` devuelve dos documentos del mismo `userId` y `channelId`:
+- El primero (`STREAM_DOES_NOT_LOAD`) se creó sin imagen, por eso `evidenceUrls: []`. La imagen es opcional.
+- El segundo (`WRONG_CHANNEL`) guarda `evidenceUrls: [ '/uploads/reports/d379d3be-f0ad-4f2d-92d9-f54c3e62b330.png' ]`, la misma ruta del archivo del punto 2. Mongo guarda solo la referencia; el archivo vive en disco.
+- Ambos tienen `status: 'OPEN'` y `createdAt` / `updatedAt` generados por `timestamps`.
+
+### 4. Lista con enlace a la evidencia
+![My reports](capturas/04a-lista-con-enlace.png)
+
+*My reports* muestra 2 reportes. El que tiene imagen incluye el enlace **"View evidence image"**; el que no tiene imagen no muestra enlace.
+
+![Imagen servida por URL](capturas/04b-imagen-url.png)
+
+Al abrir el enlace, el navegador carga `localhost:3100/uploads/reports/d379d3be-…b330.png`. Esto confirma que `express.static()` sirve la carpeta `uploads` como contenido público.
+
+### 5. Varias evidencias
+![Reporte con 3 imágenes](capturas/05-varias-evidencias.png)
+
+Un reporte con 3 imágenes (`upload.array('evidence', 5)`) muestra un enlace por archivo: **View evidence image 1, 2 y 3**. La lista indica 4 reportes en total.
+
+### 6. Reporte modificado
+![Reporte editado](capturas/06-modificado.png)
+
+Con *Edit* y *Save* (`PATCH /api/reports/:id`), la descripción pasó de `aaa` a **"Comentario actualizado"**. Es el mismo reporte (misma fecha de creación, 3:41:52 p. m.) y conserva sus 3 evidencias.
+
+### 7. Reporte eliminado
+![Lista vacía](capturas/07-eliminado.png)
+
+Tras *Delete* (`DELETE /api/reports/:id`, respuesta 204), la vista muestra **"0 reports"** y "You have not reported a channel yet.". El Controller también borra de `uploads/reports` los archivos del reporte.
+
+## Conclusión
+
+_(pendiente: la redacta la persona que entrega)_
