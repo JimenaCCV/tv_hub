@@ -86,8 +86,8 @@ test('an image evidence file is stored and exposed through its URL', async () =>
     description: 'The image is frozen.'
   }).attach('evidence', Buffer.from('image evidence'), { filename: 'evidence.png', contentType: 'image/png' }).expect(201);
 
-  expect(created.body.report.evidenceUrl).toMatch(/^\/uploads\/reports\/.+\.png$/);
-  await request(app).get(created.body.report.evidenceUrl).expect(200);
+  expect(created.body.report.evidenceUrls[0]).toMatch(/^\/uploads\/reports\/.+\.png$/);
+  await request(app).get(created.body.report.evidenceUrls[0]).expect(200);
 });
 
 test('reports reject invalid report data and invalid files', async () => {
@@ -115,4 +115,45 @@ test('reports only list the current user reports', async () => {
   const listed = await firstUser.get('/api/reports').expect(200);
   expect(listed.body.reports).toHaveLength(1);
   expect(listed.body.reports[0].description).toBe('First report.');
+});
+
+test('a report can store several evidence images', async () => {
+  const agent = await registerAgent('multi@example.com');
+  const created = await agent.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'Many images.' })
+    .attach('evidence', Buffer.from('one'), { filename: 'one.png', contentType: 'image/png' })
+    .attach('evidence', Buffer.from('two'), { filename: 'two.jpg', contentType: 'image/jpeg' })
+    .expect(201);
+
+  expect(created.body.report.evidenceUrls).toHaveLength(2);
+  await Promise.all(created.body.report.evidenceUrls.map((url: string) => request(app).get(url).expect(200)));
+});
+
+test('a user can update only their own report', async () => {
+  const owner = await registerAgent('owner@example.com');
+  const other = await registerAgent('intruder@example.com');
+  const created = await owner.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'Original.' }).expect(201);
+  const id = created.body.report._id;
+
+  const updated = await owner.patch(`/api/reports/${id}`).send({ reason: 'AUDIO_PROBLEM', description: 'Changed.', status: 'IN_PROGRESS' }).expect(200);
+  expect(updated.body.report).toEqual(expect.objectContaining({ _id: id, reason: 'AUDIO_PROBLEM', description: 'Changed.', status: 'IN_PROGRESS' }));
+  expect(await Report.countDocuments()).toBe(1);
+
+  await other.patch(`/api/reports/${id}`).send({ description: 'Hacked.' }).expect(404);
+  await owner.patch(`/api/reports/${id}`).send({ status: 'NOPE' }).expect(400);
+  await owner.patch(`/api/reports/${id}`).send({}).expect(400);
+});
+
+test('a user can delete only their own report and its files', async () => {
+  const owner = await registerAgent('deleter@example.com');
+  const other = await registerAgent('other-deleter@example.com');
+  const created = await owner.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'To delete.' })
+    .attach('evidence', Buffer.from('img'), { filename: 'x.png', contentType: 'image/png' }).expect(201);
+  const id = created.body.report._id;
+
+  await other.delete(`/api/reports/${id}`).expect(404);
+  expect(await readdir(reportUploadsDirectory)).toHaveLength(2);
+
+  await owner.delete(`/api/reports/${id}`).expect(204);
+  expect(await Report.countDocuments()).toBe(0);
+  expect((await readdir(reportUploadsDirectory)).filter((name) => name !== '.gitkeep')).toHaveLength(0);
 });
