@@ -58,15 +58,6 @@ Al enviar el formulario (motivo, descripción e imagen) con `FormData`, la pági
 - El segundo (`WRONG_CHANNEL`) guarda `evidenceUrls: [ '/uploads/reports/d379d3be-f0ad-4f2d-92d9-f54c3e62b330.png' ]`, la misma ruta del archivo del punto 2. Mongo guarda solo la referencia; el archivo vive en disco.
 - Ambos tienen `status: 'OPEN'` y `createdAt` / `updatedAt` generados por `timestamps`.
 
-### 4. Lista con enlace a la evidencia
-![My reports](capturas/04a-lista-con-enlace.png)
-
-*My reports* muestra 2 reportes. El que tiene imagen incluye el enlace **"View evidence image"**; el que no tiene imagen no muestra enlace.
-
-![Imagen servida por URL](capturas/04b-imagen-url.png)
-
-Al abrir el enlace, el navegador carga `localhost:3100/uploads/reports/d379d3be-…b330.png`. Esto confirma que `express.static()` sirve la carpeta `uploads` como contenido público.
-
 ### 5. Varias evidencias
 ![Reporte con 3 imágenes](capturas/05-varias-evidencias.png)
 
@@ -84,4 +75,6 @@ Tras *Delete* (`DELETE /api/reports/:id`, respuesta 204), la vista muestra **"0 
 
 ## Conclusión
 
-_(pendiente: la redacta la persona que entrega)_
+En esta actividad logré que TV Hub permitiera crear Reports, adjuntar una o varias imágenes como evidencia, consultarlos, modificarlos y eliminarlos.
+MongoDB guarda la información del Report y la ruta de las evidencias, mientras que `uploads/reports` almacena físicamente las imágenes. Se mantienen separados para que la base de datos maneje la información y el almacenamiento se encargue de los archivos.
+Lo que más aprendí fue cómo funciona el envío de archivos con `FormData` y cómo Multer recibe y almacena las imágenes para después relacionarlas con MongoDB.
