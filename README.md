@@ -75,13 +75,13 @@ La importación individual usa país más `tvgId` o, si falta, país más `strea
 
 Las ramas históricas `tv-hub-v5-final` y `tv-hub-v5-base` corresponden al material de V5. Este workspace contiene la referencia docente actual de TV Hub V6.
 
-Un clon nuevo usa `.env.example` automáticamente en desarrollo, por lo que no requiere crear un `.env` para empezar la clase. Si se necesita personalizar la configuración local, crear el archivo ignorado por Git:
+Un clon nuevo funciona en desarrollo sin `.env`: `src/config/env.ts` usa MongoDB local y secretos de desarrollo solo cuando `NODE_ENV` no es `production`. Si se necesita personalizar la configuración local, crear el archivo ignorado por Git:
 
 ```bash
 cp .env.example .env
 ```
 
-Las variables requeridas están documentadas en `.env.example`: `PORT`, `NODE_ENV`, `MONGO_URI`, secretos JWT y los TTL de ambos tokens. En producción se debe proporcionar un `.env` seguro o variables de entorno equivalentes; los secretos de ejemplo no son válidos para producción.
+Las variables requeridas están documentadas en `.env.example`: `PORT`, `NODE_ENV`, `MONGODB_URI` (se acepta `MONGO_URI` por compatibilidad), secretos JWT y los TTL de ambos tokens. En producción se debe proporcionar un `.env` seguro o variables de entorno equivalentes; los secretos de ejemplo no son válidos para producción.
 
 ## Commands
 

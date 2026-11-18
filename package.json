@@ -2,6 +2,9 @@
   "name": "tv-hub",
   "version": "6.0.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc && node -e \"require('fs').cpSync('src/public','dist/public',{recursive:true})\"",
@@ -9,7 +12,8 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "import:channels": "node dist/scripts/import-m3u.js",
-    "import:all-channels": "node dist/scripts/import-all-m3u.js"
+    "import:all-channels": "node dist/scripts/import-all-m3u.js",
+    "seed": "node scripts/seed-channels.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
